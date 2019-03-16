@@ -164,3 +164,41 @@ controller:
 		Period period = start.until(end);
 		
 		System.out.println("Days:"+ period.getDays());*/
+		============================================================================
+		jsp:
+		
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+
+<c:if test="${solditems ne null}">
+			<table>
+				<tr>
+					<th>#</th>
+					<th>soldItemId</th>
+					<th>feedback</th>
+					<th>soldDate</th>
+				</tr>
+				
+				<c:forEach items="${solditems}" var="solditems">
+					<tr>
+						<th>${solditems.soldItemId}</th> 
+						<th>${solditems.feedback}</th>
+						<th>${solditems.soldDate}</th> 
+						
+						
+					<%-- 	<jsp:useBean id="soldDate" class="java.util.Date"/>
+        <fmt:formatDate value="${solditems.soldDate}" type="date" pattern="dd-MMM-yyyy"/> 
+ --%>
+
+						<th><a href="returnItem.html?soldItemId=${solditems.soldItemId}&soldDate=${solditems.soldDate}">Return this item</a></th>
+					</tr>
+				</c:forEach>
+			</table>
+		</c:if>
+
+
