@@ -1,0 +1,166 @@
+service(I):
+
+public abstract Merchant updateInventory(int soldItemId, LocalDate date);
+public abstract List<SoldItems> loadSoldItems();
+--------------------------------------------------------------------------------
+service(C):
+	@Override
+	public Merchant updateInventory(int soldItemId, LocalDate date) {
+	
+	return iQueryDAO.updateInventory(soldItemId, date);			
+	}
+
+	@Override
+	public List<SoldItems> loadSoldItems() {
+		// TODO Auto-generated method stub
+		return iQueryDAO.loadSoldItems();
+	}
+=====================================================================================
+Dao(I):
+public abstract List<SoldItems> loadSoldItems();
+	
+	public abstract Merchant updateInventory(int soldItemId, LocalDate date);
+
+	public abstract void returnItems(int soldItemId, LocalDate date);
+
+======================================================================================
+
+Dao(C):
+
+
+	
+
+	@Override
+	public void plp() {
+		Admin admin=new Admin("griet", "griet@gmail.com", "asdd");
+	     Customer customer=new Customer("dfjhb@gmail.com", "ddfdf", "fead", "fewre");
+	     Merchant merchant=new Merchant("afefq", "qer", "eefewf", "efqf", 1.00, 200.0);
+	     Inventory inventory=new Inventory("qqede", 50, 200.00, "edeq", 0.00);
+	     
+	     //SoldItems items=new SoldItems("erqwr", new Date(), false, null, 120.00);
+	     inventory.setMerchant(merchant);
+	     customer.setCart(inventory);
+	     SoldItems items=new SoldItems();
+	     items.setCustomer(customer);
+	     items.setInventory(inventory);
+	     items.setFeedback("fer");
+	     items.setSoldDate(LocalDate.of(2019,Month.MARCH,10));
+	     items.setReturnedToAdmin(0);
+
+	    
+	     
+	     
+	       /* DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy");
+	        
+			String date = "16-Aug-2016";
+
+	        LocalDate localDate = LocalDate.parse(date, formatter);*/
+	    ReturnedItems returnitems=new ReturnedItems();
+	    returnitems.setReturnedDate(LocalDate.now());
+	    returnitems.setSoldItems(items);
+	    
+	     //customer.setCart(inventory);
+	     //customer.setWishList(inventory);
+	     entityManager.persist(admin);
+	     entityManager.persist(merchant);
+	     entityManager.persist(inventory);
+	     entityManager.persist(customer);
+	     entityManager.persist(items);
+	    entityManager.persist(returnitems);
+	     //entityManager.persist(items);
+	     entityManager.flush();
+	     entityManager.close();
+		
+	}
+	
+	/*LocalDate start = LocalDate.of(1947,Month.AUGUST,15);
+		LocalDate end = LocalDate.now();
+		
+		Period period = start.until(end);
+		
+		System.out.println("Days:"+ period.getDays());
+*/	
+	
+	@Override
+	public void returnItems(int soldItemId, LocalDate date) {
+		// TODO Auto-generated method stub
+		SoldItems soldItem=entityManager.find(SoldItems.class, soldItemId);
+		ReturnedItems returnedItems = new ReturnedItems();
+		returnedItems.setSoldItems(soldItem);
+		returnedItems.setReturnedDate(date);
+		entityManager.persist(returnedItems);
+		entityManager.flush();
+		
+	}
+	
+
+	@Override
+	public Merchant updateInventory(int soldItemId, LocalDate date) 
+	{	
+		
+		String str = "select r from ReturnedItems r where r.SoldItems.soldItemId=:soldItemId";
+		Query query = entityManager.createQuery(str, ReturnedItems.class);
+		query.setParameter("soldItemId", soldItemId);
+		ReturnedItems returnitems = (ReturnedItems) query.getResultList().get(0);
+		
+		SoldItems soldItem = returnitems.getSoldItems();
+		
+		
+		Period period = soldItem.getSoldDate().until(returnitems.getReturnedDate());
+		int x=period.getDays();
+		System.out.println(x);
+		
+		int inventoryId = soldItem.getInventory().getInventoryId();
+		
+
+		Inventory inventory =entityManager.find(Inventory.class, inventoryId);
+		
+		Inventory inventoryUpdated = inventory;
+		SoldItems soldItemsUpdated = soldItem;
+		inventoryUpdated.setQuantity(inventory.getQuantity()+1);
+		soldItemsUpdated.setReturnedToAdmin(1);
+		entityManager.persist(inventoryUpdated);
+		entityManager.persist(soldItemsUpdated);
+		entityManager.flush();
+		return null;
+	
+	}
+
+
+	@Override
+	public List<SoldItems> loadSoldItems() {
+		// TODO Auto-generated method stub
+		TypedQuery<SoldItems> typedQuery = entityManager.createQuery("select s from SoldItems s", SoldItems.class);
+		return typedQuery.getResultList();
+	}
+
+	
+====================================================================================================================================================
+controller:
+
+	@RequestMapping("/index")
+	public String index(Model model) {
+		iQueryService.plp();
+		model.addAttribute("solditems", iQueryService.loadSoldItems()); 
+		return "index";
+	}
+	/*@RequestParam("soldDate") String soldDate ,*/
+	@RequestMapping("/returnItem")
+	public String returnItem(@RequestParam("soldItemId") Integer soldItemId,Model model) {
+		iQueryService.updateInventory(soldItemId, LocalDate.now());
+		//model.addAttribute("soldDate", soldDate);
+		System.out.println(soldItemId);
+		SoldItems solditems= new SoldItems();
+		ReturnedItems returnedItems= new ReturnedItems();
+		/*Period period = solditems.getSoldDate().until(returnedItems.getReturnedDate());
+		int x=period.getDays();
+		System.out.println(x);*/
+		return "view";
+	}
+	
+	/*LocalDate start = LocalDate.of(1947,Month.AUGUST,15);
+		LocalDate end = LocalDate.now();
+		
+		Period period = start.until(end);
+		
+		System.out.println("Days:"+ period.getDays());*/
